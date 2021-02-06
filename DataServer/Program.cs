@@ -18,6 +18,11 @@ namespace DataServer
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); });
+                .ConfigureWebHostDefaults(webBuilder =>
+                {
+                    webBuilder
+                        .UseKestrel(options => options.Limits.MaxRequestBodySize = null)
+                        .UseStartup<Startup>();
+                });
     }
 }

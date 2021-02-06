@@ -1,6 +1,7 @@
 using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -32,7 +33,7 @@ namespace ZippingServer
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapGet("/zip", async context =>
+                endpoints.MapGet("/", async context =>
                 {
                     var sizeInMb = int.Parse(context.Request.Query["size"][0]);
 
@@ -48,6 +49,25 @@ namespace ZippingServer
                         await dataStream.CopyToAsync(fileStream);
                     }
                 });
+
+                endpoints.MapPost("/", async context =>
+                {
+                    await using var tempFile = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Delete, 1024 * 16,
+                        FileOptions.Asynchronous | FileOptions.DeleteOnClose | FileOptions.SequentialScan);
+
+                    await context.Request.BodyReader.CopyToAsync(tempFile);
+                    tempFile.Seek(0, SeekOrigin.Begin);
+
+                    using var archive = new ZipArchive(tempFile, ZipArchiveMode.Read, true);
+
+                    foreach (var server in Servers)
+                    {
+                        var file = archive.GetEntry(ReplaceInvalidChars(server));
+                        await using var fileStream = file.Open();
+
+                        await SendDataAsync(server, fileStream);
+                    }
+                });
             });
         }
 
@@ -60,6 +80,19 @@ namespace ZippingServer
             var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
             return await response.Content.ReadAsStreamAsync();
+        }
+
+        private async Task SendDataAsync(string serverUrl, Stream stream)
+        {
+            var httpClient = new HttpClient();
+
+            var request = new HttpRequestMessage(HttpMethod.Post, $"http://{serverUrl}");
+
+            var content = new StreamContent(stream);
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+            request.Content = content;
+
+            await httpClient.SendAsync(request);
         }
 
         private string ReplaceInvalidChars(string filename)

@@ -43,6 +43,16 @@ namespace DataServer
                         await context.Response.BodyWriter.WriteAsync(bytes);
                     }
                 });
+
+                endpoints.MapPost("/", async context =>
+                {
+                    var buffer = new byte[1024 * 1024];
+                    int bytesRead;
+                    do
+                    {
+                        bytesRead = await context.Request.Body.ReadAsync(buffer);
+                    } while (bytesRead > 0);
+                });
             });
         }
     }
