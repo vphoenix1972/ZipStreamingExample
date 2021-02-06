@@ -14,6 +14,7 @@ namespace ZippingServer
     public class Startup
     {
         private static readonly string[] DataServers = {"localhost:5010", "localhost:5011"};
+        private static readonly HttpClient HttpClient = new();
 
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
@@ -82,28 +83,24 @@ namespace ZippingServer
 
         private async Task<Stream> GetDataAsync(string serverUrl, int size)
         {
-            var httpClient = new HttpClient();
-
             var request = new HttpRequestMessage(HttpMethod.Get, $"http://{serverUrl}?size={size}");
 
             // Получаем данные с сервера с указанием HttpCompletionOption.ResponseHeadersRead,
             // чтобы httpClient не буферизовал ответ в памяти.
-            var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            var response = await HttpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
             return await response.Content.ReadAsStreamAsync();
         }
 
         private async Task SendDataAsync(string serverUrl, Stream stream)
         {
-            var httpClient = new HttpClient();
-
             var request = new HttpRequestMessage(HttpMethod.Post, $"http://{serverUrl}");
 
             var content = new StreamContent(stream);
             content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
             request.Content = content;
 
-            await httpClient.SendAsync(request);
+            await HttpClient.SendAsync(request);
         }
 
         private string ReplaceInvalidChars(string filename)
