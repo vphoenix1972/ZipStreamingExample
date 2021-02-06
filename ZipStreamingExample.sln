@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZippingServer", "ZippingServer\ZippingServer.csproj", "{DE673CDF-DC8A-4459-BF47-22383D2E0017}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataServer", "DataServer\DataServer.csproj", "{B193F9A8-6DC4-4CC0-92D4-08A6542269CF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DE673CDF-DC8A-4459-BF47-22383D2E0017}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE673CDF-DC8A-4459-BF47-22383D2E0017}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE673CDF-DC8A-4459-BF47-22383D2E0017}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE673CDF-DC8A-4459-BF47-22383D2E0017}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B193F9A8-6DC4-4CC0-92D4-08A6542269CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B193F9A8-6DC4-4CC0-92D4-08A6542269CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B193F9A8-6DC4-4CC0-92D4-08A6542269CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B193F9A8-6DC4-4CC0-92D4-08A6542269CF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
