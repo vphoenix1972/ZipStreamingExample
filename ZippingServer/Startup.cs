@@ -13,7 +13,7 @@ namespace ZippingServer
 {
     public class Startup
     {
-        private static readonly string[] Servers = {"localhost:5010", "localhost:5011"};
+        private static readonly string[] DataServers = {"localhost:5010", "localhost:5011"};
 
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
@@ -35,16 +35,21 @@ namespace ZippingServer
             {
                 endpoints.MapGet("/", async context =>
                 {
+                    // Получаем требуемый размер данных для генерации
                     var sizeInMb = int.Parse(context.Request.Query["size"][0]);
 
+                    // Разрешаем synchronous IO, так как ZipArhive пока не умеет с ним работать
                     context.Features.Get<IHttpBodyControlFeature>().AllowSynchronousIO = true;
 
+                    // Создаем ZipArchive, указывая в качестве выходного потока Response.Body
                     using var archive = new ZipArchive(context.Response.Body, ZipArchiveMode.Create, true);
-                    foreach (var server in Servers)
+                    foreach (var server in DataServers)
                     {
+                        // Создаем запись в архиве
                         var file = archive.CreateEntry(ReplaceInvalidChars(server));
                         await using var fileStream = file.Open();
 
+                        // Получаем поток запроса на DataServer и пишем в архив напрямую, без буферизации
                         await using var dataStream = await GetDataAsync(server, sizeInMb);
                         await dataStream.CopyToAsync(fileStream);
                     }
@@ -52,19 +57,23 @@ namespace ZippingServer
 
                 endpoints.MapPost("/", async context =>
                 {
+                    // Создаем временный файл и копируем туда запрос, иначе ZipArchive поместит все тело запроса в память
+                    // из-за того что Request.Body не Seekable
+                    // https://github.com/dotnet/runtime/issues/32577
                     await using var tempFile = new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite, FileShare.Delete, 1024 * 16,
                         FileOptions.Asynchronous | FileOptions.DeleteOnClose | FileOptions.SequentialScan);
-
                     await context.Request.BodyReader.CopyToAsync(tempFile);
                     tempFile.Seek(0, SeekOrigin.Begin);
 
                     using var archive = new ZipArchive(tempFile, ZipArchiveMode.Read, true);
 
-                    foreach (var server in Servers)
+                    foreach (var server in DataServers)
                     {
+                        // Открываем запись в архиве
                         var file = archive.GetEntry(ReplaceInvalidChars(server));
                         await using var fileStream = file.Open();
 
+                        // и отправляем ее серверу через потоки
                         await SendDataAsync(server, fileStream);
                     }
                 });
@@ -77,6 +86,8 @@ namespace ZippingServer
 
             var request = new HttpRequestMessage(HttpMethod.Get, $"http://{serverUrl}?size={size}");
 
+            // Получаем данные с сервера с указанием HttpCompletionOption.ResponseHeadersRead,
+            // чтобы httpClient не буферизовал ответ в памяти.
             var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
             return await response.Content.ReadAsStreamAsync();

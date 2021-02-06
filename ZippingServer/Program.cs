@@ -21,6 +21,7 @@ namespace ZippingServer
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder
+                        // Отключаем лимиты kestrel, так как мы будем получать больше 30MB
                         .UseKestrel(options => options.Limits.MaxRequestBodySize = null)
                         .UseStartup<Startup>();
                 });

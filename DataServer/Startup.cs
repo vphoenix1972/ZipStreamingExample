@@ -33,6 +33,8 @@ namespace DataServer
             {
                 endpoints.MapGet("/", async context =>
                 {
+                    // Генерируем поток из произвольных байтов
+
                     var sizeInMb = int.Parse(context.Request.Query["size"][0]);
 
                     var bytes = new byte[1024 * 1024];
@@ -46,6 +48,8 @@ namespace DataServer
 
                 endpoints.MapPost("/", async context =>
                 {
+                    // Просто вычитываем весь запрос
+
                     var buffer = new byte[1024 * 1024];
                     int bytesRead;
                     do
